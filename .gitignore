@@ -1,0 +1,7 @@
+
+antbuild/
+antdist/
+build/
+dist/
+classes/
+/private
