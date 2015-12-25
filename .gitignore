@@ -4,4 +4,4 @@ antdist/
 build/
 dist/
 classes/
-/private
+private/
