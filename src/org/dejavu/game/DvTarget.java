@@ -36,7 +36,12 @@ public abstract class DvTarget extends DvCharacter {
 	protected DvTarget(String name, Image stillImg, Image[] movingImg) {
 		super(name, stillImg, movingImg);
 	}
-	
+	/**
+	 * Target was destroyed. Sub-classes must implement the behaviour of a destroyed object.
+	 */
 	public abstract void destroyed();
+	/**
+	 * Target was hit. Sub-classes must implement the behaviour of a hit object.
+	 */
 	public abstract void hit();
 }

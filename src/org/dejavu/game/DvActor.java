@@ -71,7 +71,7 @@ public class DvActor {
 					long ts = System.currentTimeMillis();
 					synchronized(DvActor.this) {
 						if(lastMoved != 0) {
-							if((ts - lastMoved) > 200) {
+							if((ts - lastMoved) > 100) {
 								lastMoved = 0;
 								character.setState(DvCharacter.State.STOPPED);
 								move(new Point());
