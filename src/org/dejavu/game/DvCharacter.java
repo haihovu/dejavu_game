@@ -46,7 +46,7 @@ public class DvCharacter {
 	}
 
 	/**
-	 * Specifies the current state of the character.
+	 * Specifies the current state of the character. May be invoked from any thread.
 	 * @param state The new state
 	 * @return This object.
 	 */
@@ -57,7 +57,7 @@ public class DvCharacter {
 		return this;
 	}
 	/**
-	 * Retrieves the current state of this character.
+	 * Retrieves the current state of this character. May be invoked from any thread.
 	 * @return The current state of this character.
 	 */
 	public State getState() {
@@ -67,7 +67,8 @@ public class DvCharacter {
 	}
 	
 	/**
-	 * Specifies the scaling factor for this character.
+	 * Specifies the scaling factor for this character. May be invoked from
+	 * any thread.
 	 * @param scale The new value.
 	 * @return This object.
 	 */
@@ -82,7 +83,7 @@ public class DvCharacter {
 
 	/**
 	 * Retrieves the dimension of this character. May be invoked from any thread.
-	 * @return 
+	 * @return A copy of the dimension of this character.
 	 */
 	public Dimension getDimension() {
 		synchronized(this) {
