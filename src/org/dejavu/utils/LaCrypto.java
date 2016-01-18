@@ -70,9 +70,13 @@ public class LaCrypto {
 	 */
 	public static final class EncryptedData {
 		/**
-		 * The encrypted data
+		 * The encrypted data (optional)
 		 */
-		public final byte [] encryptedData;
+		private byte [] encryptedData;
+		/**
+		 * Key (optional)
+		 */
+		private byte [] key;
 		/**
 		 * The 16-byte initial vector
 		 */
@@ -90,13 +94,37 @@ public class LaCrypto {
 		 * @param iters The iteration count
 		 * @param salt The 8-byte salt
 		 * @param iv The 16-byte initial vector
-		 * @param data The encrypted data
 		 */
-		public EncryptedData(int iters, byte [] salt, byte [] iv, byte [] data) {
+		public EncryptedData(int iters, byte [] salt, byte [] iv) {
 			this.iv = iv;
-			this.encryptedData = data;
 			this.iterations = iters;
 			this.salt = salt;
+		}
+		
+		public byte [] getKey() {
+			synchronized(this) {
+				return key;
+			}
+		}
+		
+		public EncryptedData setKey(byte [] key) {
+			synchronized(this) {
+				this.key = key;
+			}
+			return this;
+		}
+		
+		public byte [] getEncryptedData() {
+			synchronized(this) {
+				return encryptedData;
+			}
+		}
+		
+		public EncryptedData setEncryptedData(byte [] data) {
+			synchronized(this) {
+				this.encryptedData = data;
+			}
+			return this;
 		}
 		
 		@Override
@@ -104,7 +132,15 @@ public class LaCrypto {
 			StringBuilder ret = new StringBuilder(512).append("{iv:'").append(bytesToString(iv)).append("',");
 			ret.append("salt:'").append(bytesToString(salt)).append("',");
 			ret.append("iterations:'").append(iterations).append("',");
-			return ret.append("encryptedData:'").append(bytesToString(encryptedData)).append("'}").toString();
+			synchronized(this) {
+				if(key != null) {
+					ret.append("key:'").append(bytesToString(key)).append("',");
+				}
+				if(encryptedData != null) {
+					ret.append("encryptedData:'").append(bytesToString(encryptedData)).append("',");
+				}
+			}
+			return ret.append("}").toString();
 		}
 	}
 	/**
@@ -146,7 +182,7 @@ public class LaCrypto {
 			cip.init(Cipher.ENCRYPT_MODE, secret);
 			byte[] iv = cip.getIV();
 			System.out.printf("IV is %s\n", bytesToString(iv));
-			return new EncryptedData(iterations, salt, iv, cip.doFinal(data));
+			return new EncryptedData(iterations, salt, iv).setEncryptedData(cip.doFinal(data));
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException ex) {
 			throw new LaCryptoException(ex);
 		}
@@ -166,7 +202,7 @@ public class LaCrypto {
 			SecretKey secret = new SecretKeySpec(gKeyFactory.generateSecret(keySpec).getEncoded(), gAlgorithm);
 			Cipher cip = Cipher.getInstance(gCipherTransformation);
 			cip.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(data.iv));
-			return cip.doFinal(data.encryptedData);
+			return cip.doFinal(data.getEncryptedData());
 		} catch (RuntimeException | InvalidKeySpecException | InvalidAlgorithmParameterException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException ex) {
 			throw new LaCryptoException(ex);
 		}
@@ -223,27 +259,47 @@ public class LaCrypto {
 				throw new LaCryptoException("No key factory");
 			}
 			PBEKeySpec keySpec = new PBEKeySpec(password, salt, iterations, gKeyLen);
-			SecretKey secret = new SecretKeySpec(gKeyFactory.generateSecret(keySpec).getEncoded(), gAlgorithm);
+			decrypt(encrypted, clearText, gKeyFactory.generateSecret(keySpec).getEncoded(), iv);
+		} catch (InvalidKeySpecException ex) {
+			throw new LaCryptoException(ex);
+		}
+ 	}
+	
+	/**
+	 * Decrypts a stream of data, e.g. a file, to another stream, e.g. another file.
+	 * @param encrypted The stream of encrypted data to be decrypted
+	 * @param clearText The stream to write out the decrypted data
+	 * @param key The key
+	 * @param iv The initialisation vector to be used in the decryption process.
+	 * @throws LaCryptoException 
+	 */
+	public void decrypt(InputStream encrypted, OutputStream clearText, byte [] key, byte [] iv) throws LaCryptoException {
+		try {
+			if(gKeyFactory == null) {
+				throw new LaCryptoException("No key factory");
+			}
+			SecretKey secret = new SecretKeySpec(key, gAlgorithm);
 			Cipher cip = Cipher.getInstance(gCipherTransformation);
 			cip.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
-			byte[] inputBuffer = new byte[4096];
+			byte[] inputBuffer = new byte[2048];
 			int bytes = encrypted.read(inputBuffer);
 			while(bytes > 0) {
-				byte[] out = cip.update(inputBuffer, 0, bytes);
-				clearText.write(out);
+				if(bytes < inputBuffer.length) {
+					clearText.write(cip.doFinal(inputBuffer, 0, bytes));
+					break;
+				} else {
+					clearText.write(cip.update(inputBuffer));
+				}
 				bytes = encrypted.read(inputBuffer);
 			}
-			byte[] finalchunk = cip.doFinal();
-			if(finalchunk != null) {
-				clearText.write(finalchunk);
-			}
-		} catch (InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | InvalidKeySpecException | NoSuchAlgorithmException | NoSuchPaddingException | IOException | InvalidKeyException ex) {
+		} catch (InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException | IOException | InvalidKeyException ex) {
 			throw new LaCryptoException(ex);
 		}
  	}
 	
 	private static final Pattern gSaltPattern = Pattern.compile("^salt=(.+)$");
 	private static final Pattern gIvPattern = Pattern.compile("^iv\\s+=(.+)$");
+	private static final Pattern gKeyPattern = Pattern.compile("^key=(.+)$");
 	private static byte [] stringToBytes(String str) {
 		int begin = 0;
 		int end = begin + 2;
@@ -258,38 +314,73 @@ public class LaCrypto {
 		return ret;
 	}
 	
-	public static EncryptedData getEncryptedDataFromOpenSsl(File encrypted, char [] password) throws LaCryptoException {
+	public static EncryptedData getEncryptedDataFromOpenSsl(File encrypted, char [] password) throws LaCryptoException, InterruptedException {
 		try {
-			ProcessBuilder b = new ProcessBuilder(new String[]{"openssl", "enc", "-aes-256-cbc", "-d", "-pass", "pass:" + String.valueOf(password), "-P", "-in", encrypted.toString()});
-			Process p = b.start();
-			InputStream is = p.getInputStream();
+			ProcessBuilder cmd = new ProcessBuilder(new String[]{"openssl", "enc", "-aes-256-cbc", "-d", "-pass", "pass:" + String.valueOf(password), "-P", "-in", encrypted.toString()});
+			Process proc = cmd.start();
 			try {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-				String line;
-				byte [] salt = null;
-				byte [] iv = null;
-				while ((line = reader.readLine()) != null) {
-					if(salt == null) {
-						Matcher m = gSaltPattern.matcher(line);
-						if(m.find()) {
-							salt = stringToBytes(m.group(1));
-							continue;
+				InputStream is = proc.getInputStream();
+				try {
+					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+					String line;
+					byte [] salt = null;
+					byte [] iv = null;
+					byte [] key = null;
+					while ((line = reader.readLine()) != null) {
+						if(salt == null) {
+							Matcher m = gSaltPattern.matcher(line);
+							if(m.find()) {
+								salt = stringToBytes(m.group(1));
+								continue;
+							}
+						}
+						if(iv == null) {
+							Matcher m = gIvPattern.matcher(line);
+							if(m.find()) {
+								iv = stringToBytes(m.group(1));
+								continue;
+							}
+						}
+						if(key == null) {
+							Matcher m = gKeyPattern.matcher(line);
+							if(m.find()) {
+								key = stringToBytes(m.group(1));
+								continue;
+							}
+						}
+						if((iv != null)&&(salt != null)&&(key != null)) {
+							break;
 						}
 					}
-					if(iv == null) {
-						Matcher m = gIvPattern.matcher(line);
-						if(m.find()) {
-							iv = stringToBytes(m.group(1));
-							continue;
-						}
-					}
-					if((iv != null)&&(salt != null)) {
-						break;
-					}
+					return new EncryptedData(1, salt, iv).setKey(key);
+				} finally {
+					is.close();
 				}
-				return new EncryptedData(1, salt, iv, null);
 			} finally {
-				is.close();
+				proc.waitFor();
+			}
+		} catch (IOException ex) {
+			throw new LaCryptoException(ex);
+		}
+	}
+	
+	public static void decryptOpenSslFile(File encrypted, File decrypted, char [] password) throws LaCryptoException, InterruptedException {
+		try {
+			ProcessBuilder cmd = new ProcessBuilder(new String[]{"openssl", "enc", "-aes-256-cbc", "-d", "-pass", "pass:" + String.valueOf(password), "-out", decrypted.toString(), "-in", encrypted.toString()});
+			Process proc = cmd.start();
+			try {
+				InputStream is = proc.getInputStream();
+				try {
+					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+					String line;
+					while ((line = reader.readLine()) != null) {
+						System.out.println(line);
+					}
+				} finally {
+					is.close();
+				}
+			} finally {
+				proc.waitFor();
 			}
 		} catch (IOException ex) {
 			throw new LaCryptoException(ex);
@@ -334,22 +425,30 @@ public class LaCrypto {
 				encrypted.close();
 			}
 			File openSslFile = new File("build-openssl.xml");
+			File closeSslFile = new File("build-closessl.xml");
 			EncryptedData encData = getEncryptedDataFromOpenSsl(openSslFile, password.toCharArray());
 			System.out.printf("Found %s from %s\n", encData, openSslFile);
-			LaCrypto krypt = new LaCrypto(password.toCharArray());
+			LaCrypto krypt = new LaCrypto("password".toCharArray());
 			InputStream openSsl = new FileInputStream(openSslFile);
 			try {
-				OutputStream decc = new FileOutputStream(new File("build-closessl.xml"));
+				// Skip salt
+				byte[] skip = new byte[16];
+				openSsl.read(skip);
+				OutputStream decc = new FileOutputStream(new File("test.xml"));
 				try {
-					krypt.decrypt(openSsl, decc, encData.salt, encData.iv, encData.iterations);
+					krypt.decrypt(openSsl, decc, encData.key, encData.iv);
+				} catch(LaCryptoException ex) {
+					Logger.getLogger(LaCrypto.class.getName()).log(Level.SEVERE, null, ex);
 				} finally {
 					decc.close();
 				}
 			} finally {
 				openSsl.close();
 			}
+			LaCrypto.decryptOpenSslFile(openSslFile, closeSslFile, "password".toCharArray());
 		} catch (IOException | LaCryptoException ex) {
 			Logger.getLogger(LaCrypto.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (InterruptedException ex) {
 		}
 	}
 	
