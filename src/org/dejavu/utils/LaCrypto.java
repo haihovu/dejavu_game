@@ -426,7 +426,7 @@ public class LaCrypto {
 			}
 			File openSslFile = new File("build-openssl.xml");
 			File closeSslFile = new File("build-closessl.xml");
-			EncryptedData encData = getEncryptedDataFromOpenSsl(openSslFile, password.toCharArray());
+			EncryptedData encData = getEncryptedDataFromOpenSsl(openSslFile, "password".toCharArray());
 			System.out.printf("Found %s from %s\n", encData, openSslFile);
 			LaCrypto krypt = new LaCrypto("password".toCharArray());
 			InputStream openSsl = new FileInputStream(openSslFile);
@@ -455,7 +455,7 @@ public class LaCrypto {
 	static  {
 		SecretKeyFactory tmp = null;
 		try {
-			tmp = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+			tmp = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
 		} catch (NoSuchAlgorithmException ex) {
 			Logger.getLogger(LaCrypto.class.getName()).log(Level.SEVERE, null, ex);
 		}
