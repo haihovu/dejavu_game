@@ -5,14 +5,14 @@
  */
 package org.dejavu.game;
 
-import com.mitel.guiutil.MiGuiUtil;
-import com.mitel.miutil.MiBackgroundTask;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import org.dejavu.guiutil.DjvGuiUtil;
+import org.dejavu.util.DjvBackgroundTask;
 
 /**
  * Representing a single game character that can be controlled
@@ -56,7 +56,7 @@ public class DvActor {
 	/**
 	 * Background task for detecting when the actor has stopped.
 	 */
-	private class StopDetection extends MiBackgroundTask {
+	private class StopDetection extends DjvBackgroundTask {
 		/**
 		 * Creates a new stop detector.
 		 */
@@ -94,7 +94,7 @@ public class DvActor {
 		}
 	}
 	
-	private MiBackgroundTask stopDetection;
+	private DjvBackgroundTask stopDetection;
 	private long lastMoved;
 	private final DvAnimatedPanel animation;
 	private static final int increment = 4;
@@ -119,7 +119,7 @@ public class DvActor {
 	 */
 	public DvActor connectToComponent(JComponent component, DvControlKey[] controlKeys) {
 		for(DvControlKey key : controlKeys) {
-			MiGuiUtil.registerKeyAction(component, key.keyEvent, new KeyHandler(key.direction));
+			DjvGuiUtil.registerKeyAction(component, key.keyEvent, new KeyHandler(key.direction));
 		}
 		synchronized(this) {
 			if(stopDetection != null) {
