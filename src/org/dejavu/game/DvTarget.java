@@ -8,7 +8,8 @@ package org.dejavu.game;
 import java.awt.Image;
 
 /**
- * The abstract class for all targets.
+ * The abstract class for all targets. A target is just a kind of character that
+ * can be hit and destroyed.
  * @author hai
  */
 public abstract class DvTarget extends DvCharacter {

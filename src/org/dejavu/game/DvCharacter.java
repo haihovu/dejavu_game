@@ -11,7 +11,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 
 /**
- * Represents an animated character.
+ * Represents an animated character. Animated characters include the game actor
+ * and the 'bad guys'.
  * @author hai
  */
 public class DvCharacter {
@@ -19,10 +20,22 @@ public class DvCharacter {
 	 * The states of the characters.
 	 */
 	public static enum State {
+		/**
+		 * The character is moving, i.e. arms/legs animated.
+		 */
 		MOVING,
+		/**
+		 * The character is stopped, i.e. static looking.
+		 */
 		STOPPED
 	}
+	/**
+	 * The image used when the character is in stopped state.
+	 */
 	private final Image imageStatic;
+	/**
+	 * The series of images used when the character is in moving state.
+	 */
 	private final Image[] imageMoving;
 	private Point point = new Point(0, 0);
 	private double scale = 1.0;

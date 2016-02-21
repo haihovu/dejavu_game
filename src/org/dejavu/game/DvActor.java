@@ -19,13 +19,13 @@ import org.dejavu.util.DjvBackgroundTask;
  */
 public class DvActor {
 	/**
-	 * Handle a single control key
+	 * Handle a single control key, i.e. key for moving the game character in a certain direction
 	 */
 	private class KeyHandler extends AbstractAction {
 		private final DvControlKey.Direction direction;
 		/**
 		 * Creates a new control key handler
-		 * @param dir The direction for the key.
+		 * @param dir The direction associated with this type of key events.
 		 */
 		private KeyHandler(DvControlKey.Direction dir) {
 			direction = dir;
@@ -71,12 +71,15 @@ public class DvActor {
 					long ts = System.currentTimeMillis();
 					synchronized(DvActor.this) {
 						if(lastMoved != 0) {
+							// If the character has not moved in 100ms then we consider him stopped.
 							if((ts - lastMoved) > 100) {
 								lastMoved = 0;
 								character.setState(DvCharacter.State.STOPPED);
 								move(new Point());
 							}
 						}
+						
+						// Run this loop every 500ms
 						try {
 							DvActor.this.wait(500);
 						} catch (InterruptedException ex) {

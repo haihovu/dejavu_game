@@ -9,6 +9,9 @@ import java.awt.Graphics2D;
 
 /**
  * Base class for all components that know how to render themselves.
+ * Components can be items that can be displayed and acted upon in the game, e.g.
+ * health icons, ...
+ * Actual components should sub-class from this.
  * @author hai
  */
 public abstract class DvComponent {
