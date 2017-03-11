@@ -6,7 +6,8 @@
 package org.dejavu.game;
 
 /**
- * A single control key (UP/DOWN/LEFT/RIGHT)
+ * A single control key binding (UP/DOWN/LEFT/RIGHT), i.e. binding a key press
+ * with the movement of the game character.
  */
 public class DvControlKey {
 	/**

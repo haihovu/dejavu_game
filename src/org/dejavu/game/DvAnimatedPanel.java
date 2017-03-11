@@ -27,6 +27,7 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 	class FrameRateController extends TimerTask {
 		private final Timer timer = new Timer("Animation");
 		private final Runnable work = () -> {
+			// This causes the paintComponent() method to be invoked.
 			repaint(getBounds());
 		};
 		/**
@@ -56,17 +57,26 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 		
 		@Override
 		public void run() {
+			// Do the work using the EDT, basically repaint the panel, and everything
+			// in it.
 			SwingUtilities.invokeLater(work);
 		}
 	}
 
 	private final FrameRateController controller = new FrameRateController();
 	private Image background;
+	/**
+	 * All the characters in this panel. Characters may be added and removed at any time.
+	 */
 	private final Map<String, DvCharacter> characterRepository = new HashMap<>(1024);
+	/**
+	 * All other components (non-character) in this panel. Components may be added and removed at any time.
+	 */
 	private final Map<String, DvComponent> componentRepository = new HashMap<>(128);
 	/**
-	 * Creates new animated panel instance.
+	 * Creates a new animated panel instance.
 	 */
+	@SuppressWarnings("OverridableMethodCallInConstructor")
 	public DvAnimatedPanel() {
 		initComponents();
 		setFocusable(true);
@@ -125,9 +135,18 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 	public void addCharacter(DvCharacter character) {
 		characterRepository.put(character.name, character);
 	}
+	/**
+	 * Adds a new component to the panel. All components must have unique names.
+	 * Must be invoked from the EDT.
+	 * @param component The new component.
+	 */
 	public void addComponent(DvComponent component) {
 		componentRepository.put(component.getName(), component);
 	}
+	/**
+	 * Removes a component from the panel. Must be invoked from the EDT.
+	 * @param name The name of the target component.
+	 */
 	public void removeComponent(String name) {
 		componentRepository.remove(name);
 	}

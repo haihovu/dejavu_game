@@ -5,27 +5,27 @@
  */
 package org.dejavu.game;
 
-import com.mitel.guiutil.MiGuiUtil;
-import com.mitel.miutil.MiBackgroundTask;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import org.dejavu.guiutil.DjvGuiUtil;
+import org.dejavu.util.DjvBackgroundTask;
 
 /**
  * Representing a single game character that can be controlled
  */
 public class DvActor {
 	/**
-	 * Handle a single control key
+	 * Handle a single control key, i.e. key for moving the game character in a certain direction
 	 */
 	private class KeyHandler extends AbstractAction {
 		private final DvControlKey.Direction direction;
 		/**
 		 * Creates a new control key handler
-		 * @param dir The direction for the key.
+		 * @param dir The direction associated with this type of key events.
 		 */
 		private KeyHandler(DvControlKey.Direction dir) {
 			direction = dir;
@@ -58,7 +58,7 @@ public class DvActor {
 	 * This changes the state of the character if it is deemed to have stopped
 	 * moving.
 	 */
-	private class StopDetection extends MiBackgroundTask {
+	private class StopDetection extends DjvBackgroundTask {
 		/**
 		 * Creates a new stop detector.
 		 */
@@ -73,12 +73,15 @@ public class DvActor {
 					long ts = System.currentTimeMillis();
 					synchronized(DvActor.this) {
 						if(lastMoved != 0) {
+							// If the character has not moved in 100ms then we consider him stopped.
 							if((ts - lastMoved) > 100) {
 								lastMoved = 0;
 								character.setState(DvCharacter.State.STOPPED);
 								move(new Point());
 							}
 						}
+						
+						// Run this loop every 500ms
 						try {
 							DvActor.this.wait(500);
 						} catch (InterruptedException ex) {
@@ -96,7 +99,7 @@ public class DvActor {
 		}
 	}
 	
-	private MiBackgroundTask stopDetection;
+	private DjvBackgroundTask stopDetection;
 	private long lastMoved;
 	private final DvAnimatedPanel animation;
 	private static final int increment = 4;
@@ -121,7 +124,7 @@ public class DvActor {
 	 */
 	public DvActor connectToComponent(JComponent component, DvControlKey[] controlKeys) {
 		for(DvControlKey key : controlKeys) {
-			MiGuiUtil.registerKeyAction(component, key.keyEvent, new KeyHandler(key.direction));
+			DjvGuiUtil.registerKeyAction(component, key.keyEvent, new KeyHandler(key.direction));
 		}
 		synchronized(this) {
 			if(stopDetection != null) {
