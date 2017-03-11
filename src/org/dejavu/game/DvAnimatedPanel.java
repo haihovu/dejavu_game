@@ -63,7 +63,7 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 		}
 	}
 
-	private final FrameRateController controller = new FrameRateController();
+	private final FrameRateController frameRateController = new FrameRateController();
 	private Image background;
 	/**
 	 * All the characters in this panel. Characters may be added and removed at any time.
@@ -73,6 +73,7 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 	 * All other components (non-character) in this panel. Components may be added and removed at any time.
 	 */
 	private final Map<String, DvComponent> componentRepository = new HashMap<>(128);
+	private final AffineTransform affineXform = new AffineTransform(1.0, 0.0, 0.0, 1.0, 0, 0);
 	/**
 	 * Creates a new animated panel instance.
 	 */
@@ -83,12 +84,12 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 	}
 
 	/**
-	 * Starts the animation.
+	 * Starts the animation. Must be invoked if you want to see anything moving.
 	 * @param period The period, between frames.
 	 * @return This panel.
 	 */
 	public DvAnimatedPanel start(long period) {
-		controller.start(0, period);
+		frameRateController.start(0, period);
 		return this;
 	}
 	
@@ -96,7 +97,7 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 	 * Stops the animation.
 	 */
 	public void stop() {
-		controller.stop();
+		frameRateController.stop();
 	}
 	
 	@Override
@@ -112,13 +113,13 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 					double scaleY = (double)bounds.height / (double)background.getHeight(null);
 					g2d.drawImage(background, new AffineTransform(scaleX, 0.0, 0.0, scaleY, 0.0, 0.0), null);
 				}
-				
 				characterRepository.values().stream().forEach((character) -> {
 					double scale = character.getScale();
 					Point pt = character.getPoint();
-					g2d.drawImage(character.getNextImage(), new AffineTransform(scale, 0.0, 0.0, scale, pt.x, pt.y), null);
+					affineXform.setToScale(scale, scale);
+					affineXform.setToTranslation(pt.x, pt.y);
+					g2d.drawImage(character.getNextImage(), affineXform, null);
 				});
-				
 				componentRepository.values().stream().forEach((comp) -> {
 					comp.draw(g2d);
 				});
