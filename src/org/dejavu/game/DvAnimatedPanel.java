@@ -73,7 +73,7 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 	 * All other components (non-character) in this panel. Components may be added and removed at any time.
 	 */
 	private final Map<String, DvComponent> componentRepository = new HashMap<>(128);
-	private final AffineTransform affineXform = new AffineTransform(1.0, 0.0, 0.0, 1.0, 0, 0);
+	private final AffineTransform affineXform = new AffineTransform(0.0, 0.0, 0.0, 0.0, 0, 0);
 	/**
 	 * Creates a new animated panel instance.
 	 */
@@ -111,13 +111,13 @@ public class DvAnimatedPanel extends javax.swing.JPanel {
 				if(background != null) {
 					double scaleX = (double)bounds.width / (double)background.getWidth(null);
 					double scaleY = (double)bounds.height / (double)background.getHeight(null);
-					g2d.drawImage(background, new AffineTransform(scaleX, 0.0, 0.0, scaleY, 0.0, 0.0), null);
+					affineXform.setTransform(scaleX, 0.0, 0.0, scaleY, 0.0, 0.0);
+					g2d.drawImage(background, affineXform, null);
 				}
 				characterRepository.values().stream().forEach((character) -> {
 					double scale = character.getScale();
 					Point pt = character.getPoint();
-					affineXform.setToScale(scale, scale);
-					affineXform.setToTranslation(pt.x, pt.y);
+					affineXform.setTransform(scale, 0.0, 0.0, scale, pt.x, pt.y);
 					g2d.drawImage(character.getNextImage(), affineXform, null);
 				});
 				componentRepository.values().stream().forEach((comp) -> {

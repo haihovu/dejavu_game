@@ -10,7 +10,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
-import javax.swing.JComponent;
 import org.dejavu.guiutil.DjvGuiUtil;
 import org.dejavu.util.DjvBackgroundTask;
 
@@ -86,13 +85,10 @@ public class DvActor {
 						}
 						
 						// Run this loop every 500ms
-						try {
-							DvActor.this.wait(500);
-						} catch (InterruptedException ex) {
-							break;
-						}
+						DvActor.this.wait(500);
 					}
 				}
+			} catch(InterruptedException e) {
 			} finally {
 				synchronized(DvActor.this) {
 					if(stopDetection == this) {
@@ -150,7 +146,9 @@ public class DvActor {
 	}
 	
 	/**
-	 * Moves the actor by a delta amount in the animation pane.
+	 * Moves the actor by a delta amount in the animation pane. This simply moves
+	 * the point's (location) attribute by a specific amount. The animation panel
+	 * will display the actor in the new location at its next frame.
 	 * Must be invoked from the EDT.
 	 * @param delta The delta amount to move the actor.
 	 * @return This actor.
