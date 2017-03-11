@@ -15,7 +15,11 @@ import org.dejavu.guiutil.DjvGuiUtil;
 import org.dejavu.util.DjvBackgroundTask;
 
 /**
- * Representing a single game character that can be controlled
+ * Representing a single game character that can be controlled. This is a higher
+ * abstraction than the DvCharacter concept which represents just the appearance
+ * of the character. The actor concept involves connecting the character to an
+ * animated panel, and the movement of said character using the keyboard control
+ * concept (DvControlKey).
  */
 public class DvActor {
 	/**
@@ -117,14 +121,14 @@ public class DvActor {
 		this.animation = animation;
 	}
 	/**
-	 * Connects the actor to a component (typically a root pane), via keyboard events.
-	 * @param component The anchor component
+	 * Connects the actor to an animated panel, via keyboard events.
+	 * @param animatedPanel The animated panel against which the actor is connected.
 	 * @param controlKeys The control keys with which to connect the component to the actor.
 	 * @return This actor.
 	 */
-	public DvActor connectToComponent(JComponent component, DvControlKey[] controlKeys) {
+	public DvActor connectToComponent(DvAnimatedPanel animatedPanel, DvControlKey[] controlKeys) {
 		for(DvControlKey key : controlKeys) {
-			DjvGuiUtil.registerKeyAction(component, key.keyEvent, new KeyHandler(key.direction));
+			DjvGuiUtil.registerKeyAction(animatedPanel.getRootPane(), key.keyEvent, new KeyHandler(key.direction));
 		}
 		synchronized(this) {
 			if(stopDetection != null) {

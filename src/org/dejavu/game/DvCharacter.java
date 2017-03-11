@@ -44,6 +44,7 @@ public class DvCharacter {
 	private long lastUpdate;
 	private State state = State.STOPPED;
 	private final Dimension dimension = new Dimension();
+	private final long movingImageUpdateThresholdMs = 200;
 	/**
 	 * Creates a new game character.
 	 * @param name The name of the character
@@ -130,19 +131,24 @@ public class DvCharacter {
 	public Image getNextImage() {
 		synchronized(this) {
 			if(getState() == State.MOVING) {
-				long ts = System.currentTimeMillis();
-				if(imgIdx < imageMoving.length) {
-					if((ts - lastUpdate) > 200) {
+				// Check to see if we have any moving images.
+				if((imageMoving != null)&&(imageMoving.length > 0)) {
+					long ts = System.currentTimeMillis();
+					if((ts - lastUpdate) > movingImageUpdateThresholdMs) {
+						// Threshold exceeded, move to the next image in the sequence.
 						lastUpdate = ts;
 						++imgIdx;
 						if(imgIdx >= imageMoving.length) {
+							// Roll over to zero
 							imgIdx = 0;
 						}
 					}
+					return imageMoving[imgIdx];
 				}
-				return imageMoving[imgIdx];
 			}
 		}
+		
+		// If not moving, or no moving images can be found then use the static one.
 		return imageStatic;
 	}
 	
