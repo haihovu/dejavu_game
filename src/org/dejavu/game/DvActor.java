@@ -55,6 +55,8 @@ public class DvActor {
 	}
 	/**
 	 * Background task for detecting when the actor has stopped.
+	 * This changes the state of the character if it is deemed to have stopped
+	 * moving.
 	 */
 	private class StopDetection extends MiBackgroundTask {
 		/**

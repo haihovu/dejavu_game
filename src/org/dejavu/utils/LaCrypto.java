@@ -313,7 +313,14 @@ public class LaCrypto {
 		}
 		return ret;
 	}
-	
+	/**
+	 * Decrypts and retrieves data from an encrypted file.
+	 * @param encrypted The file containing the encrypted data.
+	 * @param password The password with which to decrypt the data
+	 * @return The decrypted data.
+	 * @throws LaCryptoException
+	 * @throws InterruptedException 
+	 */
 	public static EncryptedData getEncryptedDataFromOpenSsl(File encrypted, char [] password) throws LaCryptoException, InterruptedException {
 		try {
 			ProcessBuilder cmd = new ProcessBuilder(new String[]{"openssl", "enc", "-aes-256-cbc", "-d", "-pass", "pass:" + String.valueOf(password), "-P", "-in", encrypted.toString()});
@@ -363,21 +370,28 @@ public class LaCrypto {
 			throw new LaCryptoException(ex);
 		}
 	}
-	
+	/**
+	 * Decrypt a file using the system's openssl, if existed.
+	 * @param encrypted The file containing encrypted data.
+	 * @param decrypted The file that will contain data decrypted from the encrypted file.
+	 * @param password The password to be used in the decryption process.
+	 * @throws LaCryptoException
+	 * @throws InterruptedException 
+	 */
 	public static void decryptOpenSslFile(File encrypted, File decrypted, char [] password) throws LaCryptoException, InterruptedException {
 		try {
 			ProcessBuilder cmd = new ProcessBuilder(new String[]{"openssl", "enc", "-aes-256-cbc", "-d", "-pass", "pass:" + String.valueOf(password), "-out", decrypted.toString(), "-in", encrypted.toString()});
 			Process proc = cmd.start();
 			try {
 				InputStream is = proc.getInputStream();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 				try {
-					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 					String line;
 					while ((line = reader.readLine()) != null) {
 						System.out.println(line);
 					}
 				} finally {
-					is.close();
+					reader.close();
 				}
 			} finally {
 				proc.waitFor();
@@ -389,7 +403,7 @@ public class LaCrypto {
 	
 	public static void main(String[] args) {
 		try {
-			byte[] salt = new byte[]{0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, (byte)0x80};
+			byte[] salt = new byte[]{0x10, 0x20, 0x30, 0x40, 0x50, 0x60, (byte)0x70, (byte)0x80};
 			String password = "ashdkjahdk";
 			String data = "This is a test";
 			int iters = 0xffff;
