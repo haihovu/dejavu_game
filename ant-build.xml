@@ -9,17 +9,17 @@
 		<delete dir="${dist-dir}" quiet="true" />
 	</target>
 	<target name="build-dejavu">
-		<ant dir="../dejavu" antfile="ant-build.xml" target="all"></ant>
+		<ant dir="dejavu" antfile="ant-build.xml" target="all"></ant>
 	</target>
 	<target name="clean-dejavu">
-		<ant dir="../dejavu" antfile="ant-build.xml" target="clean"></ant>
+		<ant dir="dejavu" antfile="ant-build.xml" target="clean"></ant>
 	</target>
 	<target name="compile" depends="build-dejavu">
 		<mkdir dir="${build-dir}"/>
 		<javac source="1.8" target="1.8" srcdir="${src-dir}" destdir="${build-dir}">
 			<classpath>
 				<fileset file="${midas-jar}"></fileset>
-				<fileset dir="../dejavu/ant-dist" includes="*.jar">
+				<fileset dir="dejavu/ant-dist" includes="*.jar">
 				</fileset>
 			</classpath>
 		</javac>
@@ -31,7 +31,7 @@
 		</copy>
 		<jar basedir="${build-dir}" jarfile="${dist-dir}/dejavu_game.jar" />
 		<copy todir="${dist-dir}">
-			<fileset file="${midas-jar}" />
+			<fileset dir="dejavu/ant-dist" includes="**/*.jar"/>
 		</copy>
 	</target>
 </project>
