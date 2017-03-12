@@ -1,0 +1,3 @@
+[submodule "dejavu"]
+	path = dejavu
+	url = https://github.com/haihovu/dejavu.git
